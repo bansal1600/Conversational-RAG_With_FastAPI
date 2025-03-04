@@ -1,0 +1,13 @@
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+INFO:root:Session ID: None, User Query: when was the greengrow company founded, Model: gpt-4o
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:llm response
+INFO:root:Session ID: d1fae354-95da-4d30-b9ef-3d25c547132f, AI Response: GreenGrow Innovations was founded in 2010.
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+INFO:root:Session ID: None, User Query: what are technology used during cocacola company term, Model: gpt-4o
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:llm response
+INFO:root:Session ID: 06ffbdc9-dc09-4266-b55b-59bb9c49a383, AI Response: During the term at Coca Cola Southwest Beverages, the technologies used include PySpark, Azure, Databricks, SQL, and GIT.
