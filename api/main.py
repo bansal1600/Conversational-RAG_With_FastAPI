@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from pydantic_models import QueryInput, QueryResponse, DocumentInfo, DeleteFileRequest
 from langchain_utils import get_rag_chain
 from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record
@@ -20,7 +20,9 @@ def chat(query_input: QueryInput):
     if not session_id:
         session_id = str(uuid.uuid4())
     chat_history = get_chat_history(session_id)
-    rag_chain = get_rag_chain(query_input.model.value)
+    logging.info(f"fetched user history sucesful")
+    rag_chain = get_rag_chain(query_input.api_key, query_input.model.value)
+    logging.info(f"building rag chain complete")
     answer = rag_chain.invoke({
         "input": query_input.question,
         "chat_history": chat_history
@@ -35,10 +37,9 @@ import os
 import shutil
 
 @app.post("/upload-doc")
-def upload_and_index_document(file: UploadFile = File(...)):
+def upload_and_index_document(file: UploadFile = File(...), api_key: str = Form(...)):
     allowed_extensions = ['.pdf', '.docx', '.html']
     file_extension = os.path.splitext(file.filename)[1].lower()
-    
     if file_extension not in allowed_extensions:
         raise HTTPException(status_code=400, detail=f"Unsupported file type. Allowed types are: {', '.join(allowed_extensions)}")
     
@@ -48,9 +49,11 @@ def upload_and_index_document(file: UploadFile = File(...)):
         # Save the uploaded file to a temporary file
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        
+
+        logging.info(f"at before insert_document_record")
         file_id = insert_document_record(file.filename)
-        success = index_document_to_chroma(temp_file_path, file_id)
+        logging.info(f"at before index_document_to_chroma")
+        success = index_document_to_chroma(temp_file_path, file_id, api_key)
         
         if success:
             return {"message": f"File {file.filename} has been successfully uploaded and indexed.", "file_id": file_id}
@@ -68,7 +71,7 @@ def list_documents():
 @app.post("/delete-doc")
 def delete_document(request: DeleteFileRequest):
     # Delete from Chroma
-    chroma_delete_success = delete_doc_from_chroma(request.file_id)
+    chroma_delete_success = delete_doc_from_chroma(request.file_id, request.api_key)
 
     if chroma_delete_success:
         # If successfully deleted from Chroma, delete from our database

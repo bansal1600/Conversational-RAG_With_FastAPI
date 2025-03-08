@@ -10,6 +10,7 @@ class QueryInput(BaseModel):
     question: str
     session_id: str = Field(default=None)
     model: ModelName = Field(default=ModelName.GPT4_O_MINI)
+    api_key: str
 
 class QueryResponse(BaseModel):
     answer: str
@@ -23,3 +24,4 @@ class DocumentInfo(BaseModel):
 
 class DeleteFileRequest(BaseModel):
     file_id: int
+    api_key: str

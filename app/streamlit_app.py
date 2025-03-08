@@ -16,3 +16,5 @@ display_sidebar()
 
 # Display the chat interface
 display_chat_interface()
+
+

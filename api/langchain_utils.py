@@ -3,16 +3,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from typing import List
-from langchain_core.documents import Document
-import os
-from chroma_utils import vectorstore
-retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
+from chroma_utils import get_vectorstore
 
 output_parser = StrOutputParser()
-
-
-
 
 # Set up prompts and chains
 contextualize_q_system_prompt = (
@@ -29,8 +22,6 @@ contextualize_q_prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}"),
 ])
 
-
-
 qa_prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a helpful AI assistant. Use the following context to answer the user's question."),
     ("system", "Context: {context}"),
@@ -38,10 +29,13 @@ qa_prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}")
 ])
 
+def get_rag_chain(api_key , model="gpt-4o-mini"):
+    llm = ChatOpenAI(model=model, api_key=api_key)
 
-
-def get_rag_chain(model="gpt-4o-mini"):
-    llm = ChatOpenAI(model=model)
+    # Create vectorstore dynamically with API key
+    vectorstore = get_vectorstore(api_key)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
+    
     history_aware_retriever = create_history_aware_retriever(llm, retriever, contextualize_q_prompt)
     question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
     rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)    

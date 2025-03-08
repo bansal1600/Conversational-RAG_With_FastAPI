@@ -1,14 +1,15 @@
 import requests
 import streamlit as st
 
-def get_api_response(question, session_id, model):
+def get_api_response(question, session_id, model, api_key):
     headers = {
         'accept': 'application/json',
         'Content-Type': 'application/json'
     }
     data = {
         "question": question,
-        "model": model
+        "model": model,
+        "api_key" : api_key
     }
     if session_id:
         data["session_id"] = session_id
@@ -24,11 +25,12 @@ def get_api_response(question, session_id, model):
         st.error(f"An error occurred: {str(e)}")
         return None
 
-def upload_document(file):
+def upload_document(file, api_key):
     print("Uploading file...")
     try:
         files = {"file": (file.name, file, file.type)}
-        response = requests.post("http://localhost:8000/upload-doc", files=files)
+        data = {"api_key": (None, api_key)}
+        response = requests.post("http://localhost:8000/upload-doc", files=files, data=data)
         if response.status_code == 200:
             return response.json()
         else:
@@ -50,12 +52,15 @@ def list_documents():
         st.error(f"An error occurred while fetching the document list: {str(e)}")
         return []
 
-def delete_document(file_id):
+def delete_document(file_id, api_key):
     headers = {
         'accept': 'application/json',
         'Content-Type': 'application/json'
     }
-    data = {"file_id": file_id}
+    data = {
+        "file_id": file_id,
+        "api_key": api_key
+        }
 
     try:
         response = requests.post("http://localhost:8000/delete-doc", headers=headers, json=data)

@@ -3,17 +3,21 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from typing import List
+import logging
 from langchain_core.documents import Document
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-# Set OpenAI API Key
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, length_function=len)
-embedding_function = OpenAIEmbeddings()
-vectorstore = Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
+
+# Function to create and return the vectorstore dynamically using API key
+def get_vectorstore(api_key: str) -> Chroma:
+    try:
+        if api_key:
+            embedding_function = OpenAIEmbeddings(openai_api_key=api_key)
+            return Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
+        else:
+            logging.info(f"API Key is None")
+    except Exception as e:
+        logging.info(f"API Key is None")
 
 def load_and_split_document(file_path: str) -> List[Document]:
     if file_path.endswith('.pdf'):
@@ -28,14 +32,15 @@ def load_and_split_document(file_path: str) -> List[Document]:
     documents = loader.load()
     return text_splitter.split_documents(documents)
 
-def index_document_to_chroma(file_path: str, file_id: int) -> bool:
+def index_document_to_chroma(file_path: str, file_id: int, api_key: str) -> bool:
     try:
         splits = load_and_split_document(file_path)
         
         # Add metadata to each split
         for split in splits:
             split.metadata['file_id'] = file_id
-        
+        logging.info(f"at before get_vectorstore")
+        vectorstore = get_vectorstore(api_key)
         vectorstore.add_documents(splits)
         # vectorstore.persist()
         return True
@@ -43,8 +48,9 @@ def index_document_to_chroma(file_path: str, file_id: int) -> bool:
         print(f"Error indexing document: {e}")
         return False
 
-def delete_doc_from_chroma(file_id: int):
+def delete_doc_from_chroma(file_id: int, api_key: str):
     try:
+        vectorstore = get_vectorstore(api_key)
         docs = vectorstore.get(where={"file_id": file_id})
         print(f"Found {len(docs['ids'])} document chunks for file_id {file_id}")
         
